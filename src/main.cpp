@@ -41,7 +41,7 @@
 #define LED		  2			  // Buildin ESP32/ESP8266 LED
 #define OPERATIVE_TIME	  30000			  // Max device operative time (in millis) before deep sleep
 #define uS_TO_S_FACTOR	  1000000		  // Conversion factor for micro seconds to seconds
-#define TIME_TO_SLEEP     60			  // Deep sleep time (in seconds) (900 = 15 minutes)
+#define TIME_TO_SLEEP     1800			  // Deep sleep time (in seconds) (900 = 15 minutes)
 #define DHT_PIN   	  5			  // GPIO PIN connected to DHT sensor
 
 DHT dht;					  // DHT sensor
