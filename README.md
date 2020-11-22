@@ -1,14 +1,18 @@
 # outdoor-alexa-th-sensor
 
-This device is an outdoor battery powered temperature & humidity sensor compatible with Amazon Alexa. 
+This device is an outdoor battery powered temperature & humidity sensor compatible with Amazon Alexa.
 
 To permit Amazon Alexa integration is used the Sinric Pro service (https://sinric.pro).
 
 ## Features
 
-1. Battery powered
-2. Compatible with Amazon Alexa
-3. Configurable Deep Sleep time to save battery life
+* Battery powered
+* Compatible with Amazon Alexa
+* Configurable Deep Sleep time to save battery life
+
+## Requirements
+
+* Sinric Pro account
 
 ## Hardware
 
@@ -19,13 +23,14 @@ The hardware composition is the following:
 
 ### Wiring
 
- ESP32     | DHT22
- --------- | -----
- 3V3       | +
- GND       | -
- D5 (GPIO5)| OUT
+ESP32     | DHT22
+--------- | -----
+3V3       | +
+GND       | -
+D5 (GPIO5)| OUT
  
- ## Software
+## Software
  
- The sketch is 
+The sketch is derived from the examples stored in [Sinric Pro official GitHub page](https://github.com/sinricpro/esp8266-esp32-sdk "Sinric Pro official GitHub page"). It's edited to permit the Deep Sleep mode so that the Outdoor Alexa TH Sensor can be powered by a 18650 battery and keeps the battery alive as long as possible.
+
 
