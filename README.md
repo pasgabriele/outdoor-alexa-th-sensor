@@ -1,6 +1,7 @@
 # outdoor-alexa-th-sensor
 
 This device is an outdoor battery powered temperature & humidity sensor compatible with Amazon Alexa. 
+
 To permit Amazon Alexa integration is used the Sinric Pro service (https://sinric.pro).
 
 ## Features
