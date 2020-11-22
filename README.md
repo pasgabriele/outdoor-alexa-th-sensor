@@ -11,9 +11,11 @@ The hardware composition is the following:
 
 ### Wiring
 
-ESP32     | DHT22
---------- | -------------
-3V3       | +
-GND       | -
-D5 (GPIO5)| OUT
+18650 | ESP32     | DHT22
+----- | --------- | -------------
++     | VIN       |
+-     | GND       |
+      | 3V3       | +
+      | GND       | -
+      | D5 (GPIO5)| OUT
 
