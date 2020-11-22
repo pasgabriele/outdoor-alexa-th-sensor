@@ -6,9 +6,9 @@ To permit Amazon Alexa integration is used the Sinric Pro service (https://sinri
 
 ## Features
 
-1 Battery powered
-2 Compatible with Amazon Alexa
-3 Configurable Deep Sleep time to save battery life
+1. Battery powered
+2. Compatible with Amazon Alexa
+3. Configurable Deep Sleep time to save battery life
 
 ## Hardware
 
