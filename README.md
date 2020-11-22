@@ -1,6 +1,12 @@
 # outdoor-alexa-th-sensor
 
-This sketch is used to create an outdoor battery powered temperature & humidity sensor compatible with Amazon Alexa.
+This device is an outdoor battery powered temperature & humidity sensor compatible with Amazon Alexa. To permit Amazon Alexa integration is used the Sinric Pro service (https://sinric.pro).
+
+## Features
+
+1 Battery powered
+2 Compatible with Amazon Alexa
+3 Configurable Deep Sleep time to save battery life
 
 ## Hardware
 
@@ -16,4 +22,8 @@ The hardware composition is the following:
  3V3       | +
  GND       | -
  D5 (GPIO5)| OUT
+ 
+ ## Software
+ 
+ The sketch is 
 
