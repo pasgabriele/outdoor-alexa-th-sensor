@@ -3,7 +3,7 @@
  * - setup a temperature sensor device
  * - send temperature event to SinricPro server when temperature has changed
  *
- * DHT Sensor is connected to D5 on ESP8266 devices / GPIO5 on ESP32 devices
+ * DHT Sensor is connected to GPIO5 on ESP32 devices
  *
  * DHT Library used in this example: https://github.com/markruys/arduino-DHT
  *
@@ -26,51 +26,35 @@
        #define NDEBUG
 #endif
 
-
 #include <Arduino.h>
-#ifdef ESP8266
-       #include <ESP8266WiFi.h>
-#endif
-#ifdef ESP32
-       #include <WiFi.h>
-#endif
-
+#include <WiFi.h>
 #include "SinricPro.h"
 #include "SinricProTemperaturesensor.h"
-#include "DHT.h" // https://github.com/markruys/arduino-DHT
+#include "DHT.h"				  // https://github.com/markruys/arduino-DHT
 
-#define WIFI_SSID         "SSID"
-#define WIFI_PASS         "WIFI PASSWORD"
-#define APP_KEY           "SINRICPRO APP KEY"      // Should look like "de0bxxxx-1x3x-4x3x-ax2x-5dabxxxxxxxx"
-#define APP_SECRET        "SINRICPRO APP SECRET"   // Should look like "5f36xxxx-x3x7-4x3x-xexe-e86724a9xxxx-4c4axxxx-3x3x-x5xe-x9x3-333d65xxxxxx"
-#define TEMP_SENSOR_ID    "SINRICPRO SENSOR ID"    // Should look like "5dc1564130xxxxxxxxxxxxxx"
-#define BAUD_RATE         9600                // Change baudrate to your need (used for serial monitor)
-#define EVENT_WAIT_TIME   60000               // send event every 60 seconds
-#define LED 2
-#define TEMPO_OPERATIVO   30000              //tempo massimo (in millisecondi) che il sensore deve rimanere attivo prima dello sleep
+#define WIFI_SSID	  "SSID"
+#define WIFI_PASS	  "WIFI PASSWORD"
+#define APP_KEY		  "SINRICPRO APP KEY"	  // Should look like "de0bxxxx-1x3x-4x3x-ax2x-5dabxxxxxxxx"
+#define APP_SECRET	  "SINRICPRO APP SECRET"  // Should look like "5f36xxxx-x3x7-4x3x-xexe-e86724a9xxxx-4c4axxxx-3x3x-x5xe-x9x3-333d65xxxxxx"
+#define TEMP_SENSOR_ID	  "SINRICPRO SENSOR ID"	  // Should look like "5dc1564130xxxxxxxxxxxxxx"
+#define BAUD_RATE	  9600			  // Change baudrate to your need (used for serial monitor)
+#define LED		  2			  // Buildin ESP32/ESP8266 LED
+#define OPERATIVE_TIME	  30000			  // Max device operative time (in millis) before deep sleep
+#define uS_TO_S_FACTOR	  1000000		  // Conversion factor for micro seconds to seconds
+#define TIME_TO_SLEEP     60			  // Deep sleep time (in seconds) (900 = 15 minutes)
+#define DHT_PIN   	  5			  // GPIO PIN connected to DHT sensor
 
-//deep sleep configuration
-#define uS_TO_S_FACTOR 1000000      //conversion factor for micro seconds to seconds
-#define TIME_TO_SLEEP  60           //time ESP32 will go to sleep (in seconds) (900 = 15 minutes)
+DHT dht;					  // DHT sensor
 
-#ifdef ESP8266
-       #define DHT_PIN    D5
-#endif
-#ifdef ESP32
-       #define DHT_PIN    5
-#endif
-
-DHT dht;                                      // DHT sensor
-
-bool deviceIsOn;                              // Temeprature sensor on/off state
-float temperature;                            // actual temperature
-float humidity;                               // actual humidity
-float lastTemperature;                        // last known temperature (for compare)
-float lastHumidity;                           // last known humidity (for compare)
-unsigned long startup;
+bool deviceIsOn;				  // Temeprature sensor on/off state
+float temperature;				  // actual temperature
+float humidity;					  // actual humidity
+float lastTemperature;				  // last known temperature (for compare)
+float lastHumidity;				  // last known humidity (for compare)
+unsigned long startup;				  // startup time (for compare)
 
 //RTC variables. These will be preserved during the deep sleep.
-RTC_DATA_ATTR int bootCount = 0;
+RTC_DATA_ATTR int bootCount = 0;		  // counter to monitor deep sleep cycles
 
 //function that prints the reason by which ESP32 has been awaken from sleep
 void print_wakeup_reason(){
@@ -102,41 +86,40 @@ void print_wakeup_reason(){
  */
 bool onPowerState(const String &deviceId, bool &state) {
   Serial.printf("Temperaturesensor turned %s (via SinricPro) \r\n", state?"on":"off");
-  deviceIsOn = state; // turn on / off temperature sensor
-  return true; // request handled properly
+  deviceIsOn = state;				  // turn on/off temperature sensor
+  return true;					  // request handled properly
 }
 
 /* handleTemperatatureSensor()
  * - Checks if Temperaturesensor is turned on
- * - Checks if time since last event > EVENT_WAIT_TIME to prevent sending too much events
  * - Get actual temperature and humidity and check if these values are valid
  * - Compares actual temperature and humidity to last known temperature and humidity
  * - Send event to SinricPro Server if temperature or humidity changed
  */
 void handleTemperaturesensor() {
-  if (deviceIsOn == false) return; // device is off...do nothing
+  if (deviceIsOn == false) return;		  // device is off...do nothing
 
-  temperature = dht.getTemperature();          // get actual temperature in °C
-//  temperature = dht.getTemperature() * 1.8f + 32;  // get actual temperature in °F
-  humidity = dht.getHumidity();                // get actual humidity
+  temperature = dht.getTemperature();		  // get actual temperature in °C
+//temperature = dht.getTemperature() * 1.8f + 32; // get actual temperature in °F
+  humidity = dht.getHumidity();			  // get actual humidity
 
-  if (isnan(temperature) || isnan(humidity)) { // reading failed...
-    Serial.printf("DHT reading failed!\r\n");  // print error message
-    return;                                    // try again next time
+  if (isnan(temperature) || isnan(humidity)) {	  // reading failed...
+    Serial.printf("DHT reading failed!\r\n");	  // print error message
+    return;					  // try again next time
   }
 
-  if (temperature == lastTemperature || humidity == lastHumidity) return; // if no values changed do nothing...
+  if (temperature == lastTemperature || humidity == lastHumidity) return; // if no values changed do nothing
 
-  SinricProTemperaturesensor &mySensor = SinricPro[TEMP_SENSOR_ID];  // get temperaturesensor device
-  bool success = mySensor.sendTemperatureEvent(temperature, humidity); // send event
-  if (success) {  // if event was sent successfuly, print temperature and humidity to serial
+  SinricProTemperaturesensor &mySensor = SinricPro[TEMP_SENSOR_ID];	  // get temperaturesensor device
+  bool success = mySensor.sendTemperatureEvent(temperature, humidity);	  // send event
+  if (success) {							  // if event was sent successfuly, print temperature and humidity to serial
     Serial.printf("Temperature: %2.1f Celsius\tHumidity: %2.1f%%\r\n", temperature, humidity);
-  } else {  // if sending event failed, print error message
+  } else {								  // if sending event failed, print error message
     Serial.printf("Something went wrong...could not send Event to server!\r\n");
   }
 
-  lastTemperature = temperature;  // save actual temperature for next compare
-  lastHumidity = humidity;        // save actual humidity for next compare
+  lastTemperature = temperature;		  // save actual temperature for next compare
+  lastHumidity = humidity;			  // save actual humidity for next compare
 }
 
 
@@ -163,12 +146,12 @@ void setupSinricPro() {
   SinricPro.onConnected([](){ Serial.printf("Connected to SinricPro\r\n"); });
   SinricPro.onDisconnected([](){ Serial.printf("Disconnected from SinricPro\r\n"); });
   SinricPro.begin(APP_KEY, APP_SECRET);
-  SinricPro.restoreDeviceStates(true); // get latest known deviceState from server (is device turned on?)
+  SinricPro.restoreDeviceStates(true);		  // get latest known deviceState from server (is device turned on?)
 }
 
 // main setup function
 void setup() {
-  //turn on ESP onboard LED
+  //turn on ESP buildin LED
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH);
 
@@ -176,30 +159,28 @@ void setup() {
   dht.setup(DHT_PIN);
 
   //increment boot number and print it every reboot
-	++bootCount;
-	Serial.println("INFO: Boot number: " + String(bootCount));
+  ++bootCount;
+  Serial.println("INFO: Boot number: " + String(bootCount));
 
-  //print the wakeup reason for ESP32
-	print_wakeup_reason();
+  print_wakeup_reason();			  // print the wakeup reason for ESP32
 
   setupWiFi();
   setupSinricPro();
 
-  startup = millis();
+  startup = millis();				  // get startup time
 }
 
 void loop() {
   SinricPro.handle();
   handleTemperaturesensor();
 
-  unsigned long actualMillis = millis();
+  unsigned long actualMillis = millis();	  // get actual time (to compare with startup time)
 
-  if (actualMillis - startup > TEMPO_OPERATIVO){
-    //set timer to deep sleep
+  if (actualMillis - startup > OPERATIVE_TIME){	  // compare starup time and actual time to set device in deep sleep mode
     esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
     Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) + " Seconds");
 
-    //turn off ESP32 onboard LED
+    //turn off ESP32 buildin LED
     digitalWrite(LED, LOW);
 
     //go to deep sleep now
